@@ -8,85 +8,90 @@ interface IResponse {
   userId: number
 }
 
-function App() {
-  const [data, setData] = useState<IResponse[]>()
-  const [buttonEdit, setButtonEdit] = useState<number>()
+const App: React.FC = () => {
+    const [data, setData] = useState<any[]>()
+    const [fetchedData, setFetchedData] = useState<any[]>();
+    const [buttonEdit, setButtonEdit] = useState<number>()
+    const [editingId, setEditingId] = useState<number>()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const fetched = await (
-        await fetch('https://dummyjson.com/todos')
-      ).json();
+    const [currentItem, setCurrentItem] = useState({
+        id: '',
+        todo: '',
+        completed: '',
+        userId: ''
+    }) 
 
-      setData(fetched.todos.slice(0,10));
+     const fetchData = async () => {
+        const response = await fetch('https://dummyjson.com/todos');
+        const json = await response.json();
     }
 
-    fetchData();
-  },[])
+    useEffect(() => {
+        fetchData();
+    }, [])
 
-  const showingData = () => (
-    data != null ?
-    data.map((item) => (
-      <tr key={item.id}> 
-        {
-          buttonEdit == item.id ? 
-          <>
-            <td data-label="ID"><input value={item.id}/></td>
-            <td data-label="Todo"><input value={item.todo}/></td>
-            <td data-label="Status"><input value={item.completed == false ? 'false': 'true'}/></td>
-            <td data-label="UserID"><input value={item.userId}/></td> 
-          </>
-          : 
-          <>
-          <td data-label="ID">{item.id}</td>
-          <td data-label="Todo">{item.todo}</td>
-          <td data-label="Status">{item.completed == false ? 'false': 'true'}</td>
-          <td data-label="UserID">{item.userId}</td> 
-          </>
+    function handleClick(value: any)
+    {
+        setEditingId(value)
+        // TODO: cancel or save edits
+    }
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCurrentItem({
+            ...currentItem,
+            [e.target.name]: e.target.value
+        })
+    }
+
+    const handleSave = () => {
+    }
+
+    const handleRemove = (curVal: number) => {
+        setData(data?.filter((i: { id: number; }) => i.id != curVal))
+    }
+
+    const listItems = fetchedData?.map((task)=>
+    {
+        if (editingId === task.id) {
+        return(
+            <tr key={task.id}>
+                <td data-label="ID"><input name="id" onChange={handleChange} defaultValue={task.id}/></td>
+                <td data-label="Todo"><input name="todo" onChange={handleChange} defaultValue={task.todo}/></td>
+                <td data-label="Status"><input name="completed" onChange={handleChange} defaultValue={task.completed == false ? 'false': 'true'}/></td>
+                <td data-label="UserID"><input name="userId" onChange={handleChange} defaultValue={task.userId}/></td> 
+                <td onClick={handleSave}>Save</td>
+            </tr>)
         }
+        else {
+            return (<tr key={task.id}>
+                <td data-label="ID">{task.id}</td>
+                <td data-label="Todo">{task.todo}</td>
+                <td data-label="Status">{task.completed == false ? 'false': 'true'}</td>
+                <td data-label="UserID">{task.userId}</td> 
+                <td onClick={(e)=> handleClick(task.id)}>Edit</td>
+                <td onClick={(e) => handleRemove(task.id)}>Remove</td>
+            </tr>)
+         }
+    })
 
-        <td>
-          <button className={item.id.toString()} onClick={(event: React.MouseEvent<HTMLElement>) => {
-              setButtonEdit(item.id)
-            }}>
-              Edit
-          </button>
-        </td>
-        <td>
-          <button>Delete</button>
-        </td>
-      </tr>
-    ))
-    :
-    <tr>
-      <td>
-        <p>
-          loading..
-        </p>
-      </td>
-    </tr>
-  )
 
-  return (
-    <div className="App">
-      <table>
-        <caption>Statement Summary</caption>
-        <thead>
-          <tr>
-            <th scope="col">Id</th>
-            <th scope="col">Todo</th>
-            <th scope="col">Completed</th>
-            <th scope="col">UserID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            showingData()
-          }
-        </tbody>
-      </table>
-    </div>
-  );
+    return(
+        <>
+        <table id="myTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Detail</th>
+                    <th>Assignee</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {listItems}
+            </tbody>
+        </table>
+        </>
+    )
 }
-
 export default App;

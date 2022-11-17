@@ -10,8 +10,9 @@ interface IResponse {
 
 const App: React.FC = () => {
     const [data, setData] = useState<any[]>()
+    const [fetchedData, setFetchedData] = useState<any[]>();
     const [buttonEdit, setButtonEdit] = useState<number>()
-    const [editingId, setEditingId] = useState(undefined)
+    const [editingId, setEditingId] = useState<number>()
 
     const [currentItem, setCurrentItem] = useState({
         id: '',
@@ -20,19 +21,50 @@ const App: React.FC = () => {
         userId: ''
     }) 
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await fetch('https://dummyjson.com/todos');
-            const json = await response.json();
 
-            localStorage.setItem('Response', JSON.stringify(json.todos));
-            // @ts-ignore
-            setData(JSON.parse(localStorage.getItem('Response')))
-            //setData(fetched.todos.slice(0,10));
+    const checkStorage = (key: string) => {
+        const storedData = localStorage.getItem(key);
+        
+        if (storedData == undefined || null) {
+            return true
         }
-    
+        else {
+            return false
+        }
+     }
+
+     const fetchData = async () => {
+        const response = await fetch('https://dummyjson.com/todos');
+        const json = await response.json();
+
+        localStorage.setItem('FetchedResponse', JSON.stringify(json.todos));
+        // // @ts-ignore
+        setFetchedData(JSON.parse(localStorage.getItem('FetchedResponse')))
+    }
+
+    useEffect(() => {
         fetchData();
-      },[])
+        
+        // if(checkStorage('Response')) {
+        //     console.log('yes')
+        // }
+        // else {
+        //     setTimeout(() => {
+        //         localStorage.setItem('Response', JSON.stringify(fetchedData));
+        //         // @ts-ignore
+        //         setData(JSON.parse(localStorage.getItem('Response')))
+
+        //         console.log(JSON.stringify(fetchedData))
+        //     },1000)
+
+        //     console.log('not')
+        // }
+    }, [])
+      
+    useEffect(() => {
+        localStorage.setItem('Response', JSON.stringify(fetchedData))
+        console.log(localStorage.getItem('Response') || '{}')
+    },[fetchedData])
 
     function handleClick(value: any)
     {
@@ -41,21 +73,33 @@ const App: React.FC = () => {
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // No longer need to cast to any - hooray for react!
         setCurrentItem({
             ...currentItem,
             [e.target.name]: e.target.value
         })
 
-        console.log(currentItem)
+        // setCurrentItem({
+        //     ...currentItem,
+        //     id: e.currentTarget.value,
+        //     todo: ,
+        //     completed:,
+        //     userId:,
+        // })
+
     }
 
     const handleSave = () => {
-        console.log(data)
 
+        // let item = JSON.parse(localStorage.getItem('Response'))
+        // localStorage.setItem('Response', JSON.stringify(item))
     }
 
-    const listItems = data?.map((task)=>
+    const handleRemove = (curVal: number) => {
+        setData(data?.filter((i: { id: number; }) => i.id != curVal))
+        localStorage.setItem('Response', JSON.stringify(data))
+    }
+
+    const listItems = fetchedData?.map((task)=>
     {
         if (editingId === task.id) {
         return(
@@ -73,13 +117,15 @@ const App: React.FC = () => {
                 <td data-label="Todo">{task.todo}</td>
                 <td data-label="Status">{task.completed == false ? 'false': 'true'}</td>
                 <td data-label="UserID">{task.userId}</td> 
-                <td onClick={(e)=>{handleClick(task.id)}}>Edit</td>
+                <td onClick={(e)=> handleClick(task.id)}>Edit</td>
+                <td onClick={(e) => handleRemove(task.id)}>Remove</td>
             </tr>)
          }
     })
 
 
     return(
+        <>
         <table id="myTable">
             <thead>
                 <tr>
@@ -94,6 +140,7 @@ const App: React.FC = () => {
                 {listItems}
             </tbody>
         </table>
+        </>
     )
 }
 export default App;
